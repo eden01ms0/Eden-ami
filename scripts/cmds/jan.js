@@ -1,31 +1,17 @@
 const axios = require("axios");
 
-// 🔹 যেসব শব্দে বট রেসপন্ড করবে
 const mahmuds = [
   "baby", "babu", "bby", "jan", "bot",
   "জান", "বেবি", "hinata", "miakhalifa", "kutta"
 ];
 
-// 🔹 Base API URL নেওয়ার ফাংশন
-async function baseApiUrl() {
-  try {
-    const res = await axios.get("https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json");
-    return res.data?.jan || "";
-  } catch (err) {
-    console.error("Base URL Load Error:", err.message);
-    // fallback URL
-    return "https://mahmudapis.vercel.app";
-  }
-}
-
-// 🔹 Responses লিস্ট (তুমি যেটা দিয়েছিলে — পুরোটা রাখা হয়েছে)
 const responses = [
   "babu khuda lagse🥺",
   "Hop beda😾,Boss বল boss😼",  
   "আমাকে ডাকলে ,আমি কিন্তূ কিস করে দেবো😘 ",  
   "🐒🐒🐒",
   "bye",
-  "naw message daw m.me/eden.here0",
+  "Boss id😽 https://m.me/ibonex.eden",
   "mb ney bye",
   "meww",
   "গোলাপ ফুল এর জায়গায় আমি দিলাম তোমায় মেসেজ",
@@ -112,59 +98,35 @@ const responses = [
   "মন সুন্দর বানাও মুখের জন্য তো 'Snapchat' আছেই! 🌚"
 ];
 
-// 🔹 Bot Response ফাংশন
-async function getBotResponse(message) {
-  try {
-    const base = await baseApiUrl();
-    if (!base) return "API লিংক লোড হয়নি 😔";
-
-    const res = await axios.get(`${base}/jan/font3/${encodeURIComponent(message)}`);
-    return res.data?.message || "try again 🥺";
-  } catch (err) {
-    console.error("API Error:", err.message);
-    return "error জানু 🥲";
-  }
-}
-
 module.exports = {
   config: {
     name: "bot",
-    version: "3.0",
+    version: "3.5",
     author: "Eden",
     role: 0,
-    category: "ai",
-    guide: { en: "Just type jan or baby 😋" }
+    category: "fun",
+    shortDescription: "Auto reply bot by Eden 😎",
   },
 
-  onStart: async function () {},
-
-  onChat: async function ({ api, event }) {
+  onMessage: async function ({ api, event }) {
     try {
-      const message = (event.body || "").toLowerCase();
-      if (!message) return;
+      const text = (event.body || "").toLowerCase();
+      const isReply = !!event.messageReply;
+      if (!text && !isReply) return;
 
-      if (!mahmuds.some(word => message.includes(word))) return;
+      // reply করা হলে body ধরবে
+      const replyText = isReply ? event.messageReply.body?.toLowerCase() : "";
 
-      api.setMessageReaction("👀", event.messageID, () => {}, true);
+      // যদি keyword থাকে
+      if (!mahmuds.some(w => text.includes(w) || replyText.includes(w))) return;
 
-      const words = message.split(" ");
-      const wordCount = words.length;
+      // random response
+      const reply = responses[Math.floor(Math.random() * responses.length)];
+      const finalMsg = `${reply}\n\n🌌 Made by Eden`;
 
-      // একটাই শব্দ হলে random reply
-      if (wordCount === 1) {
-        const randomMsg = responses[Math.floor(Math.random() * responses.length)];
-        return api.sendMessage(`${randomMsg}\n\n✨ Made by Eden`, event.threadID, event.messageID);
-      }
-
-      // শব্দের পর কিছু থাকলে API call
-      const userText = words.slice(1).join(" ");
-      const botResponse = await getBotResponse(userText);
-
-      api.sendMessage(`${botResponse}\n\n👤 Author: Eden`, event.threadID, event.messageID);
-
+      return api.sendMessage(finalMsg, event.threadID, event.messageID);
     } catch (err) {
-      console.error("Chat Error:", err.message);
-      api.sendMessage("Internal error 😿", event.threadID);
+      console.error("Bot Error:", err.message);
     }
   }
 };
